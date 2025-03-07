@@ -7,8 +7,8 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
-    configureSecurity()
-    configureSerialization()
-    configureDatabases()
-    configureRouting()
+    val host = environment.config.property( "ktor.deployment.host").getString()
+    val port = environment.config.property( "ktor.deployment.port").getString()
+
+    println("Running on $host:$port")
 }
