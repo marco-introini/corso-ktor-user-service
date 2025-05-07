@@ -3,7 +3,7 @@ ktor:
     modules:
       - it.marcointroini.ApplicationKt.module
   deployment:
-    host: "$HOST:0.0.0.0"
+    host: "$HOST:localhost"
     port: "$PORT:8080"
 jwt:
   domain: "https://jwt-provider-domain/"
