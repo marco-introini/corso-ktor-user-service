@@ -3,6 +3,9 @@ package it.marcointroini
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.server.application.*
 import io.ktor.server.config.ApplicationConfig
+import it.marcointroini.model.AppUser
+import it.marcointroini.model.UserType
+import it.marcointroini.repository.UserRepository
 import kotlin.time.Duration.Companion.seconds
 
 fun main(args: Array<String>) {
@@ -16,7 +19,11 @@ fun Application.module() {
     println("Running on $host:$port")
 
     val dataSource = getDataSource(environment.config)
+    val repository = UserRepository()
+
     dataSource.connection
+    val uuid = repository.create(dataSource.connection, AppUser("marco@mintdev.me", "test", UserType.USER, "John", "Doe"))
+
 }
 
 private fun ApplicationConfig.getProperty(path: String): String = property(path).getString()
