@@ -14,20 +14,22 @@ class UserRepository {
 
     fun create(connection: Connection, appUser: AppUser): UUID {
         val statement = connection.prepareStatement(INSERT, RETURN_GENERATED_KEYS)
-        statement.setObject(1, UUID.randomUUID())
-        statement.setString(2,appUser.email)
-        statement.setString(3,appUser.password)
-        statement.setString(4,appUser.firstName)
-        statement.setString(5,appUser.lastName)
+            . apply {
+                setObject(1, UUID.randomUUID())
+                setString(2, appUser.email)
+                setString(3, appUser.password)
+                setString(4, appUser.firstName)
+                setString(5, appUser.lastName)
+            }
         return try {
             statement.executeUpdate()
             val resultSet = statement.generatedKeys
             resultSet.next()
 
-            val generatedKey = (resultSet.getObject (  "id") as UUID)
-            logger.info("Successfully generated user with id: $generatedKey and email ${appUser.email}")
-            generatedKey
-
+            (resultSet.getObject("id") as UUID)
+                .also {
+                    logger.info("Successfully generated user with id: $it and email ${appUser.email}")
+                }
         } catch (e: PSQLException) {
             logger.error("Error creating user: ${e.message}")
             throw DBOperationException("Error creating user: ${e.message}", e)
