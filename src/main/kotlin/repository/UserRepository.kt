@@ -3,6 +3,8 @@ package it.marcointroini.repository
 import io.ktor.util.logging.KtorSimpleLogger
 import it.marcointroini.exceptions.DBOperationException
 import it.marcointroini.model.AppUser
+import it.marcointroini.model.AppUserEntry
+import it.marcointroini.model.UserType
 import org.postgresql.util.PSQLException
 import java.sql.Connection
 import java.sql.Statement.RETURN_GENERATED_KEYS
@@ -14,7 +16,7 @@ class UserRepository {
 
     fun create(connection: Connection, appUser: AppUser): UUID {
         val statement = connection.prepareStatement(INSERT, RETURN_GENERATED_KEYS)
-            . apply {
+            .apply {
                 setObject(1, UUID.randomUUID())
                 setString(2, appUser.email)
                 setString(3, appUser.password)
@@ -36,8 +38,32 @@ class UserRepository {
         }
     }
 
+    fun findById(connection: Connection, id: UUID): AppUserEntry? {
+        val statement = connection.prepareStatement(SELECT_BY_ID)
+            .apply { setObject(1, id) }
+        return try {
+            statement.executeQuery()
+                .takeIf { it.next() }
+                ?.let { resultSet ->
+                    AppUserEntry(
+                        uuid = resultSet.getObject("id") as UUID,
+                        email = resultSet.getString("email"),
+                        firstName = resultSet.getString("first_name"),
+                        lastName = resultSet.getString("last_name"),
+                        type = UserType.valueOf(resultSet.getString("type")),
+                    )
+                }
+        } catch (ex: PSQLException) {
+            logger.error("Unable to find by id: $id")
+            throw DBOperationException("Unable to find by id: $id", ex)
+        }
+    }
+
     companion object {
         private const val INSERT =
             "INSERT INTO app.app_user (id, email, password, first_name, last_name) VALUES (?, ?, ?, ?, ?)"
+        private const val SELECT_BY_ID =
+            "SELECT id, email, type, first_name, last_name FROM app.app_user WHERE id = ?"
     }
 }
+
