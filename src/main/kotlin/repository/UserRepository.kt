@@ -7,6 +7,7 @@ import it.marcointroini.model.AppUserEntry
 import it.marcointroini.model.UserType
 import org.postgresql.util.PSQLException
 import java.sql.Connection
+import java.sql.PreparedStatement
 import java.sql.Statement.RETURN_GENERATED_KEYS
 import java.util.UUID
 
@@ -42,22 +43,25 @@ class UserRepository {
         val statement = connection.prepareStatement(SELECT_BY_ID)
             .apply { setObject(1, id) }
         return try {
-            statement.executeQuery()
-                .takeIf { it.next() }
-                ?.let { resultSet ->
-                    AppUserEntry(
-                        uuid = resultSet.getObject("id") as UUID,
-                        email = resultSet.getString("email"),
-                        firstName = resultSet.getString("first_name"),
-                        lastName = resultSet.getString("last_name"),
-                        type = UserType.valueOf(resultSet.getString("type")),
-                    )
-                }
+            executeQuery(statement)
         } catch (ex: PSQLException) {
             logger.error("Unable to find by id: $id")
             throw DBOperationException("Unable to find by id: $id", ex)
         }
     }
+
+    private fun executeQuery(statement: PreparedStatement): AppUserEntry? =
+        statement.executeQuery()
+            .takeIf { it.next() }
+            ?.let { resultSet ->
+                AppUserEntry(
+                    uuid = resultSet.getObject("id") as UUID,
+                    email = resultSet.getString("email"),
+                    firstName = resultSet.getString("first_name"),
+                    lastName = resultSet.getString("last_name"),
+                    type = UserType.valueOf(resultSet.getString("type")),
+                )
+            }
 
     companion object {
         private const val INSERT =
