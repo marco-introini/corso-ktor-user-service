@@ -50,6 +50,17 @@ class UserRepository {
         }
     }
 
+    fun findByEmail(connection: Connection, email: String): AppUserEntry? {
+        val statement = connection.prepareStatement(SELECT_BY_EMAIL)
+            .apply { setString(1, email) }
+        return try {
+            executeQuery(statement)
+        } catch (ex: PSQLException) {
+            logger.error("Unable to find by email: $email")
+            throw DBOperationException("Unable to find by email: $email", ex)
+        }
+    }
+
     private fun executeQuery(statement: PreparedStatement): AppUserEntry? =
         statement.executeQuery()
             .takeIf { it.next() }
@@ -68,6 +79,8 @@ class UserRepository {
             "INSERT INTO app.app_user (id, email, password, first_name, last_name) VALUES (?, ?, ?, ?, ?)"
         private const val SELECT_BY_ID =
             "SELECT id, email, type, first_name, last_name FROM app.app_user WHERE id = ?"
+        private const val SELECT_BY_EMAIL =
+            "SELECT id, email, type, first_name, last_name FROM app.app_user WHERE email = '?'"
     }
 }
 
